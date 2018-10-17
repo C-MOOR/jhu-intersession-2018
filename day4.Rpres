@@ -1,0 +1,165 @@
+Day4: outside sources and fun packages! 
+========================================================
+author: Caitlin Pozmanter
+date: Janurary 17th 2018
+autosize: true
+
+homework review 
+========================================================
+
+- Google poll to review some of the biology we covered last time
+- google poll to review deseq analysis 
+
+BiomaRt
+========================================================
+- biomaRt is a package we can use to integrate information from other databases such as flybase and ensemble 
+- user guide can be found here: http://bioconductor.org/packages/release/bioc/manuals/biomaRt/man/biomaRt.pdf
+
+BiomaRt specific terms 
+========================================================
+- mart
+- dataset
+- attributes
+- filters
+
+load biomart
+==============================
+```{r}
+library("biomaRt")
+
+```
+Different Marts
+===========================
+- we can use the listmarts function to get a list of availible marts to get data from
+```{r}
+listMarts()
+```
+loading a mart
+===================
+```{r}
+mart <- useMart("ensembl")
+```
+Each mart has many datasets!
+===============================
+```{r}
+listDatasets(mart)
+```
+
+loading a dataset
+============================
+```{r}
+fly <- useDataset( "dmelanogaster_gene_ensembl", mart=mart )
+fly
+```
+
+lets look at the Drosophila data set!
+==================================
+- a very long list comes up
+```{r}
+listAttributes(fly)
+```
+back to the DESeq output from friday
+========================
+- load the bam results using the read table function 
+- what information could make this more informative?
+```{r}
+bam <- read.table("/home/intro-rna/data/bamRes")
+head(bam)
+```
+using the flybase ID to retreive gene names from biomaRt
+========================
+- to retrieve information from biomaRt we use the getBM function
+```{r}
+?getBM
+```
+retrieving gene names
+========================
+- What attributes do we need?
+
+retrieving gene names
+========================
+- What attributes do we need?
+  - flybase_gene_id
+  - external_gene_id
+  
+retrieving gene names
+===========================
+- remember the column name in the DESeq output for the IDs! 
+```{r}
+gene <- getBM( attributes = c( "flybase_gene_id", "external_gene_name" ),
+                    filter     = "flybase_gene_id", 
+                    values     = bam$id, 
+                    mart       = fly )
+```
+What information do you expect to be stored in gene?
+========================
+What information do you expect to be stored in gene?
+====================
+```{r}
+head(gene)
+```
+Now lets add the gene names to our DESeq output!
+==========================
+```{r}
+bam$name <- gene$external_gene_name[ match( bam$id, gene$flybase_gene_id ) ]
+head(bam)
+```
+we can now search our output by gene name
+===================
+- look at the expression change for tdrd5p (CG15930)
+```{r}
+bam[which(bam$name == "CG15930"),]
+```
+what are some good control genes to look up?
+==================
+
+retreiving sequences
+====================
+- Hopefully your RNAseq gave you a gene you are interested in studying!
+- biomaRt has a function for getting the specific sequence info you are interested in!
+- lets get the 5'utr of tdrd5p!
+```{r}
+seq <- getSequence( id= "CG15930", type= "external_gene_name", seqType = "5utr",mart = fly)
+head(seq)
+```
+where to find other useful packages
+=========================
+- the bioconductor website has over 1000 packages!
+
+plotting packages
+===================
+- 2 additional packages that can be useful for ploting your data
+  - ggplot2 - read up on your own 
+  - plotly
+
+plotly
+=========
+- allows you to make interactive graphs!
+  - more info https://plot.ly/r/
+
+scatter plot
+================
+- we can hover over dots to see the gene name 
+```{r,}
+library("plotly")
+p <- plot_ly(data = bam, x = ~log(baseMeanA), y = ~log(baseMeanB), text = ~name)
+```
+color the genes we are interested in
+======================
+```{r}
+p <- plot_ly(data = bam, x = ~log(baseMeanA), y = ~log(baseMeanB), text = ~name,color=~padj<0.05, colors=c( "blue", "orange" ))
+```
+Homework
+========================
+- Disucssion in your project specific slack channels
+  - post at least one idea or question
+  - respond at least once to every other idea or question posted in your channel 
+
+- work on your capstones!
+
+In class assignment
+=======================
+- follow the link to this google poll
+ - https://docs.google.com/forms/d/e/1FAIpQLScB0UNEIgM5rFMaewM8c2A_eZaNOu3F9tP-n3CovSTN6JC3Vw/viewform?usp=sf_link
+ 
+- You can work in pairs, but each person needs to individually answer the questions

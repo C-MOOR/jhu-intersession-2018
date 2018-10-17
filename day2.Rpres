@@ -1,0 +1,236 @@
+day2
+========================================================
+author: Caitlin Pozmanter
+date: Janurary 10th 2018
+autosize: true
+
+Outline 
+========================================================
+
+- Homework review
+- loading data
+- sub-setting data
+- visualizing/plotting data
+- dplyr package 
+- capstone discussion
+- homework 
+
+Questions from Homework?
+========================================================
+
+Variables 
+========================================================
+Which of the following is saving a string as a variable?
+
+- data = bam
+- data <- bam
+- data = "bam"
+- data <- "bam"
+
+Getting help in R
+==================================
+- Every function in R has a help page
+- in R studio this comes up to the right of the console
+  - you can veiw the help page while writing your code!
+
+- just use the "?" symbol followed by the function
+
+```{r}
+?read.table
+
+```
+Loading data 
+========================================================
+- we can use the read.table function to read a file
+- we can also save this to data to a variable
+- For today we will look at htseq outputs 
+  - htseq is used to map sequencing reads to the genome 
+```{r}
+setwd( "/home/intro-rna/data" )
+
+bamF <- "bamF.1.htseq"
+
+```
+Look at the top of the data
+========================================================
+- What do you expect to see?
+- What went wrong?
+```{r}
+head(bamF)
+```
+Loading the metadata
+========================================================
+- metadata tells R what the files are!
+```{r}
+bam_meta <- read.table("/home/intro-rna/data/bam.tsv")
+```
+look at bam_meta
+========================================================
+```{r}
+bam_meta
+```
+Now lets go back and look at the htseq file
+========================================
+- how is this different compared to what we saw the first time?
+- what do you think the columns represent?
+```{r}
+bamF <- read.table("/home/intro-rna/data/bamF.1.htseq")
+head(bamF)
+```
+What does the bottom of bamF look like?
+==========================================================
+- do we need this information?
+```{r}
+tail(bamF)
+```
+
+We can subset our data to include only the rows we need
+======================================================
+
+Homework refresher on subsetting
+================================================
+- we can use square brackets [,] to subset data
+  -df[row, column]
+  -df[row:row, column:column]
+
+Back to removing the bottom of our bamF data 
+==========================================================
+```{r}
+bamF_reads <- bamF[1:17559,]
+tail(bamF_reads)
+```
+plotting data 
+========================================
+```{r, echo=FALSE}
+plot(bamF_reads)
+```
+
+log transforming data
+==============================
+- makes data easier to visualize
+```{r}
+
+bamFlog <- log(bamF_reads[,2] +1)
+
+```
+plot transformed data
+====================================
+- we can see more of the data points
+- is the the most helpful was to plot this type of data?
+```{r}
+plot(bamFlog)
+
+```
+
+histogram
+====================================
+```{r}
+hist(bamFlog)
+
+```
+the dplyr package
+========================
+- more readable/ intuitive
+- another way to do a lot of the same commands done with base R
+
+load dplyr
+===========================
+```{r}
+
+library("dplyr")
+
+```
+common dplyr functions
+==========================
+
+- select()
+- filter()
+- mutate()
+- summarize()
+- group_by()
+
+Lets load data with more columns!
+=================================
+- file from deSeq output 
+
+```{r}
+bamRes <- read.table("/home/intro-rna/data/bamRes")
+head(bamRes)
+
+```
+selecting data using dplyr
+================================
+```{r}
+basemean <- select(bamRes, id, baseMeanA, baseMeanB)
+head(basemean)
+
+```
+Filtering data with dplyr
+==============================
+```{r}
+highA <- filter(basemean, baseMeanA > 1000)
+head(highA)
+
+```
+How many genes have a baseMeanA over 1000?
+===============================
+-what function could we use to answer this question?
+
+How many genes have a baseMeanA over 1000?
+=========================================
+- we can use the dim function 
+- is it the number of rows or columns that gives us the answer?
+
+```{r}
+dim(highA)
+```
+What if we want to carry out 2 functions in 1 command?
+=========================================
+- we can use the pipe function
+- In dyplr the pipe symbol is %>%
+- lets try selecting and filtering our bam results in one command!
+
+piping the select and filter functions
+======================================
+```{r}
+bamPipe <- bamRes %>% select(id, baseMeanA, baseMeanB) %>% filter(baseMeanA > 1000)
+head(bamPipe)
+
+```
+Did we arrive at the same result?
+===============================
+```{r}
+head(highA)
+head(bamPipe)
+
+```
+The mutate function can be used to add columns 
+====================================
+- lets add a column to the highA data frame
+- make a new column that has the log transformed values of basemean A
+
+```{r}
+logA <- mutate(highA, logBmA = log(baseMeanA))
+head(logA)
+
+```
+Review
+=======================
+- ploting data
+  - plot(), hist(), log()
+- subsetting data
+  - df[row, column]
+  - dplyr functions
+- summarizing data
+  - head(), tail(), summary(), str(), dim(), class()
+
+Homework
+========================
+- pick an htseq file to investigate
+  - plot data using plot(), hist() etc
+  - use ? for plots to figure out how to label your axes!
+  - report back on summary stats
+  
+Capstone discussion 
+=========================
+  

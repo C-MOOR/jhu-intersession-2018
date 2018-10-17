@@ -1,0 +1,195 @@
+Day3: DESeq Analysis 
+========================================================
+author: Caitlin Pozmanter
+date: Janurary 12th 2018
+autosize: true
+
+Outline 
+========================================================
+
+- Homework Review
+- Review of the Biology 
+- Intro to DEseq and normalization 
+- PCA plots 
+- nbinom test
+- plotting results
+- Review of subsetting 
+- Homework intro 
+
+Homework: exploring Htseq files
+========================================
+- volunteers to come up and share their results?
+
+Review of the biology
+===================================
+
+Lets brainstorm some biological questions!
+=========================================
+- Will share what we come up with in a word file
+
+DEseq Intro 
+======================
+- DESeq is a package used to calculate changes in gene expression between samples
+- For an imput it requires files that contain raw counts for each gene in each replicate
+  - what files can we use?
+
+Loading the data
+======================
+- review: who remembers how we load data?
+
+Loading the data
+=======================
+- set our working directory and load package
+```{r}
+library("DESeq")
+setwd("/home/intro-rna/data")
+```
+- save the file we will use to make our counts data set to a variable 
+```{r}
+setwd("/home/intro-rna/data/")
+bam <- read.table("/home/intro-rna/data/bam.tsv")
+head(bam)
+```
+
+Counts data set (cds)
+=============================
+- since we aligned our sequencing reads with htseq we can use a command called newCountDataSetFromHTSeqCount
+```{r}
+?newCountDataSetFromHTSeqCount
+```
+Counts data set (cds)
+===========================
+```{r}
+setwd("/home/intro-rna/data/")
+cds <- newCountDataSetFromHTSeqCount( bam )
+head(cds)
+```
+Normalization: estimate size factors
+=======================
+- the first step to normalize our data is to determine the effective size of our sequencing library 
+- why is this important?
+
+Normalization: estimate size factors
+===========================
+- what are these size factors telling us?
+- how do you think DESeq uses these values to normalize the data?
+```{r}
+cds <- estimateSizeFactors( cds )
+sizeFactors( cds )
+```
+Lets compare the normalized counts to raw counts!
+============================
+```{r}
+head(counts(cds))
+head(counts(cds, normalized = TRUE))
+```
+Variance
+===========================
+- What is Variance?
+- What kind of variance can we expect in our RNAseq data?
+
+Estimate dispersions
+=======================
+- Think of dispersion as how much the expression level of a gene differs between replicate of the same condition 
+```{r}
+cds <- estimateDispersions(cds)
+head(cds)
+```
+Plotting dispersion 
+==============================
+- this plots the per gene dispersion in black and fitted curve in red
+```{r}
+plotDispEsts( cds )
+```
+
+Variance stablizing transformation 
+=================================
+- way to account for variablity in the data 
+```{r}
+cdsB <- estimateDispersions( cds, method="blind" )
+vsd <- varianceStabilizingTransformation( cdsB )
+```
+PCA plot 
+=================================
+- What is a principle component analysis?
+- How many clusters should we see for the bamF vs bamM dataset?
+- If we had male samples and females samples each from 2 different tissues i.e gonads and brains, how many clusters would you expect?
+
+```{r}
+plotPCA(vsd)
+```
+calculating gene expression differences
+=========================
+- to test whether a gene has a signifigant difference in expression we can use the nbinomTest function
+- What is a nbinomTest?
+```{r}
+?nbinomTest
+```
+What information do we get from this test?
+======================
+- lets look at the output of the nbinomTest function
+```{r}
+res <- nbinomTest(cds, "bamF", "bamM")
+head(res)
+```
+What information is in each of these columns?
+======================
+
+What information is in each of these columns?
+============================
+- id: flybase gene ID
+- baseMean: mean of counts from all conditions divided by their size factors
+- baseMeanA: mean of counts from condition A (bamF) divided by their size factors
+- baseMeanB: mean of counts from condition B (bamM) divided by their size factors
+- foldChnage: the ratio of baseMeanB to baseMeanA
+- log2FoldChange: log2 of fold change
+- pval: p-value for that gene
+- padj: p-value adjusted for false discovery rate
+
+visualizing data with an  MA plot
+===================================
+- an MA plot will plot the log fold change vs the mean normalized counts
+
+- think of it as the ratio vs average 
+
+making an MA plot of our data
+==================================
+- what is different about the red vs the grey dots 
+```{r}
+plotMA(res)
+?plotMA
+```
+Filtering our DESeq output
+===========================
+- it will be useful to look at only subsets of genes
+- lets start by filtering for just signifigant changes in expression 
+```{r}
+resSig <- res[ which( res$padj < 0.1 ), ]
+head(resSig)
+```
+Using True/False statements to filter our data 
+===================================
+- Lets look at our data where genes are most enriched in males
+```{r}
+head( resSig[ order( resSig$log2FoldChange, decreasing=TRUE ), ] )
+```
+Using True/False statements to filter our data 
+===================================
+- Now lets look at our data where genes are most enriched in females
+```{r}
+head( resSig[ order( resSig$log2FoldChange, decreasing=FALSE ), ] )
+```
+Lets brainstorm other useful ways to filter our data!
+========================================
+- What information do you want to filter by?
+Homework
+==================
+- read the DESeq vignette
+- Capstone proposals due Wed 1/17
+
+Capstone proposals
+=========================
+- Introduction that includes background biology 
+- Questions you propose to answer
+- What packages will you need to use to answer these questions?
+- Plots or tables you plan to generate 

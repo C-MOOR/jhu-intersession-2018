@@ -1,0 +1,102 @@
+Heatmaps 
+========================================================
+author: Caitlin Pozmanter
+date: Janurary 19th 2018
+autosize: true
+
+What are heat maps
+========================================================
+- colormetric tool for looking at gene expression changes
+- can cluster your data based on gene expression similarities 
+
+First we need to load data
+========================================================
+- I've made a file called bamName that is the DESeq output plus the gene names from biomaRt
+```{r}
+setwd("/home/intro-rna/data/")
+bamName <- read.csv("bamName", row.names = 1)
+head(bamName)
+```
+Heatmaps require a matrix
+===========================
+- is bamName a matrix?
+
+```{r}
+class(bamName)
+```
+Making a matrix from our data frame
+=========================
+- first lets look at our data frame and determine which columns are important for making our heat map
+```{r}
+head(bamName)
+```
+Making a matrix from our data frame
+=========================
+- for a heat map we need a numerical matrix
+- we are interested in expression differences 
+  - We need the baseMeanA and baseMeanB columns and log fold change 
+```{r}
+bamMatrix <- as.matrix(bamName[,3:4])
+head(bamMatrix)
+```
+We need to add our gene names to make sense of the matrix!
+=======================
+```{r}
+row.names(bamMatrix) <- bamName$name
+head(bamMatrix)
+```
+Lets make sure we still have a matrix
+====================
+```{r}
+class(bamMatrix)
+```
+Load package for gplots and look at heatmap help page
+======================
+```{r}
+library("gplots")
+?heatmap.2
+```
+Basic heat map
+=======================
+-lets compare all the male data to all the female data
+- this doesn't tell us much 
+```{r}
+library("gplots")
+heatmap.2(bamMatrix)
+```
+Heat map of less genes
+=======================
+- going to tell it to sort by row and to use a blue-red color scale
+```{r}
+heatmap.2(bamMatrix[100:130,], Rowv = TRUE, col = bluered(200))
+```
+Make a heatmap for highly female enriched genes
+======================
+- first lets subset some genes
+```{r}
+bamF <- bamName[which(bamName$log2FoldChange < -5),]
+```
+Make a heatmap for highly female enriched genes
+===========================
+```{r}
+bamFmatrix <- as.matrix(bamF[,3:4])
+row.names(bamFmatrix) <- bamF$name
+heatmap.2(bamFmatrix[1:30,], Rowv = TRUE, col = bluered(100))
+```
+Now lets make a heat map for overall highly expressed genes
+====================
+```{r}
+bamHigh <- bamName[which(bamName$baseMean > 100,000),]
+bamHmatrix <- as.matrix(bamHigh[,3:4])
+row.names(bamHmatrix) <- bamHigh$name
+heatmap.2(bamHmatrix[600:630,], Rowv = TRUE, col = bluered(200))
+```
+More info on heatmaps
+=======================
+- This was just the basic code needed to make a heatmap
+- by reading the help page there are plenty of changes you can make
+  - axis label
+  - size of labels
+  - color key
+- there are multiple options for packages that make heat maps 
+- R even has a basic heatmap function!
